@@ -6,7 +6,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 # from views import delete_employee, get_all_employees, get_single_employee, create_employee, update_employee, get_employees_by_location
 from urllib.parse import urlparse, parse_qs
 
-from views import get_all_entries, get_single_entry
+from views import get_all_entries, get_single_entry, delete_entry, get_entries_with_search
 
 # Here's a class. It inherits from another class.
 # For now, think of a class as a container for functions that
@@ -172,8 +172,8 @@ class HandleRequests(BaseHTTPRequestHandler):
             (resource, query) = parsed
             
             # see if the query dictionary has an email key
-            if query.get('email') and resource == 'customers':
-                response = get_customer_by_email(query['email'][0])
+            if query.get('q') and resource == 'entries':
+                response = get_entries_with_search(query['q'][0])
             if query.get('location_id') and resource == 'animals':
                 response = get_animals_by_location(query['location_id'][0])
             if query.get('status') and resource == 'animals':
@@ -252,8 +252,8 @@ class HandleRequests(BaseHTTPRequestHandler):
         # Parse the URL
         (resource, id) = self.parse_url(self.path)
         # Delete a single animal from the list
-        if resource == "animals":
-            delete_animal(id)
+        if resource == "journal_entries":
+            delete_entry(id)
         if resource == "locations":
             delete_location(id)
         if resource == "customers":

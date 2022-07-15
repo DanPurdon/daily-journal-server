@@ -1,10 +1,10 @@
 import sqlite3
 import json
-from models import Entry
+from models import Entry, Mood
 
 def get_all_entries():
     # Open a connection to the database
-    with sqlite3.connect("./kennel.sqlite3") as conn:
+    with sqlite3.connect("./dailyjournal.sqlite3") as conn:
 
         # Just use these. It's a Black Box.
         conn.row_factory = sqlite3.Row
@@ -17,8 +17,11 @@ def get_all_entries():
             a.concept,
             a.entry,
             a.mood_id,
-            a.date
+            a.date,
+            m.label mood_label
         FROM journal_entries a
+        JOIN moods m
+            ON a.mood_id = m.id
                 """)
 
         # Initialize an empty list to hold all entry representations
@@ -30,16 +33,16 @@ def get_all_entries():
         # Iterate list of data returned from database
         for row in dataset:
             # Create an entry instance from the current row
-            entry = Entry(row['id'], row['name'], row['breed'], row['status'],
-                            row['customer_id'], row['location_id'])
+            entry = Entry(row['id'], row['concept'], row['entry'], row['mood_id'],
+                            row['date'])
 
             # Create a Location instance from the current row
-            # location = Location(row['location_id'], row['location_name'], row['location_address'])
+            mood = Mood(row['mood_id'], row['mood_label'])
             # customer = Customer(row['customer_id'], row['customer_name'], row['customer_address'], row['customer_email'], row['customer_password'])
             
 
             # Add the dictionary representation of the location to the entry
-            # entry.location = location.__dict__
+            entry.mood = mood.__dict__
             # entry.customer = customer.__dict__
 
             # Add the dictionary representation of the entry to the list
@@ -49,7 +52,7 @@ def get_all_entries():
     return json.dumps(entries)
 
 def get_single_entry(id):
-    with sqlite3.connect("./kennel.sqlite3") as conn:
+    with sqlite3.connect("./dailyjournal.sqlite3") as conn:
         conn.row_factory = sqlite3.Row
         db_cursor = conn.cursor()
 
@@ -58,12 +61,11 @@ def get_single_entry(id):
         db_cursor.execute("""
         SELECT
             a.id,
-            a.name,
-            a.breed,
-            a.status,
-            a.customer_id
-            a.location_id
-        FROM entry a
+            a.concept,
+            a.entry,
+            a.mood_id,
+            a.date
+        FROM journal_entries a
         WHERE a.id = ?
         """, ( id, ))
 
@@ -71,8 +73,44 @@ def get_single_entry(id):
         data = db_cursor.fetchone()
 
         # Create an entry instance from the current row
-        entry = Entry(data['id'], data['name'], data['breed'],
-                            data['status'], data['customer_id'],
-                            data['location_id'])
+        entry = Entry(data['id'], data['concept'], data['entry'], data['mood_id'],
+                            data['date'])
 
         return json.dumps(entry.__dict__)
+
+def delete_entry(id):
+    with sqlite3.connect("./dailyjournal.sqlite3") as conn:
+        db_cursor = conn.cursor()
+
+        db_cursor.execute("""
+        DELETE FROM journal_entries
+        WHERE id = ?
+        """, (id, ))
+
+def get_entries_with_search(term):
+
+    with sqlite3.connect("./dailyjournal.sqlite3") as conn:
+        conn.row_factory = sqlite3.Row
+        db_cursor = conn.cursor()
+
+        # Write the SQL query to get the information you want
+        db_cursor.execute("""
+        select
+            a.id,
+            a.concept,
+            a.entry,
+            a.mood_id,
+            a.date
+        FROM journal_entries a
+        WHERE a.entry LIKE ? 
+        """, ( f"%{term}%", ))
+
+        entries = []
+        dataset = db_cursor.fetchall()
+
+        for row in dataset:
+            entry = Entry(row['id'], row['concept'], row['entry'], row['mood_id'],
+                            row['date'])
+            entries.append(entry.__dict__)
+
+    return json.dumps(entries)
