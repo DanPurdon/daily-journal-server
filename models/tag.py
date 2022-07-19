@@ -1,4 +1,4 @@
-class Mood():
+class Tag():
 
     def __init__(self, id, label):
         self.id = id

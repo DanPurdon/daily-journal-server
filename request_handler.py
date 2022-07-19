@@ -6,7 +6,9 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 # from views import delete_employee, get_all_employees, get_single_employee, create_employee, update_employee, get_employees_by_location
 from urllib.parse import urlparse, parse_qs
 
-from views import get_all_entries, get_single_entry, delete_entry, get_entries_with_search
+from views import get_all_entries, get_single_entry, delete_entry, get_entries_with_search, create_entry, update_entry
+from views import get_all_moods
+from views import get_all_tags
 
 # Here's a class. It inherits from another class.
 # For now, think of a class as a container for functions that
@@ -152,21 +154,21 @@ class HandleRequests(BaseHTTPRequestHandler):
                     response = f"{get_single_entry(id)}"
                 else:
                     response = f"{get_all_entries()}"
-            elif resource == "customers":
+            elif resource == "moods":
                 if id is not None:
-                    response = f"{get_single_customer(id)}"
+                    response = f"{get_single_mood(id)}"
                 else:
-                    response = f"{get_all_customers()}"
-            elif resource == "employees":
+                    response = f"{get_all_moods()}"
+            elif resource == "tags":
                 if id is not None:
-                    response = f"{get_single_employee(id)}"
+                    response = f"{get_single_tag(id)}"
                 else:
-                    response = f"{get_all_employees()}"
-            elif resource == "locations":
-                if id is not None:
-                    response = f"{get_single_location(id)}"
-                else:
-                    response = f"{get_all_locations()}"
+                    response = f"{get_all_tags()}"
+            # elif resource == "locations":
+            #     if id is not None:
+            #         response = f"{get_single_location(id)}"
+            #     else:
+            #         response = f"{get_all_locations()}"
 
         else: # There is a ? in the path, run the query param functions
             (resource, query) = parsed
@@ -174,12 +176,12 @@ class HandleRequests(BaseHTTPRequestHandler):
             # see if the query dictionary has an email key
             if query.get('q') and resource == 'entries':
                 response = get_entries_with_search(query['q'][0])
-            if query.get('location_id') and resource == 'animals':
-                response = get_animals_by_location(query['location_id'][0])
-            if query.get('status') and resource == 'animals':
-                response = get_animals_by_status(query['status'][0])
-            if query.get('location_id') and resource == 'employees':
-                response = get_employees_by_location(query['location_id'][0])
+            # if query.get('location_id') and resource == 'animals':
+            #     response = get_animals_by_location(query['location_id'][0])
+            # if query.get('status') and resource == 'animals':
+            #     response = get_animals_by_status(query['status'][0])
+            # if query.get('location_id') and resource == 'employees':
+            #     response = get_employees_by_location(query['location_id'][0])
 
         self.wfile.write(response.encode())
 
@@ -200,14 +202,14 @@ class HandleRequests(BaseHTTPRequestHandler):
         # Initialize new data
         new_data = None
 
-        if resource == "animals":
-            new_data = create_animal(post_body)
-        if resource == "locations":
-            new_data = create_location(post_body)
-        if resource == "employees":
-            new_data = create_employee(post_body)
-        if resource == "customers":
-            new_data = create_customer(post_body)
+        if resource == "entries":
+            new_data = create_entry(post_body)
+        # if resource == "locations":
+        #     new_data = create_location(post_body)
+        # if resource == "employees":
+        #     new_data = create_employee(post_body)
+        # if resource == "customers":
+        #     new_data = create_customer(post_body)
 
         self.wfile.write(f"{new_data}".encode())
 
@@ -226,8 +228,8 @@ class HandleRequests(BaseHTTPRequestHandler):
 
         success = False
 
-        if resource == "animals":
-            success = update_animal(id, post_body)
+        if resource == "entries":
+            success = update_entry(id, post_body)
         
         # if resource == "customers":
         #     success = update_customer(id, post_body)
@@ -252,14 +254,14 @@ class HandleRequests(BaseHTTPRequestHandler):
         # Parse the URL
         (resource, id) = self.parse_url(self.path)
         # Delete a single animal from the list
-        if resource == "journal_entries":
+        if resource == "entries":
             delete_entry(id)
-        if resource == "locations":
-            delete_location(id)
-        if resource == "customers":
-            delete_customer(id)
-        if resource == "employees":
-            delete_employee(id)
+        # if resource == "locations":
+        #     delete_location(id)
+        # if resource == "customers":
+        #     delete_customer(id)
+        # if resource == "employees":
+        #     delete_employee(id)
 
         # Encode the new animal and send in response
         self.wfile.write("".encode())

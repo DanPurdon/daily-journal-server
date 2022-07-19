@@ -51,3 +51,28 @@ INSERT INTO `tags` VALUES (null, "Rants");
 
 INSERT INTO `entry_tags` VALUES (null, 1, 2);
 INSERT INTO `entry_tags` VALUES (null, 2, 1);
+
+SELECT
+		a.id,
+		a.concept,
+		a.entry,
+		a.mood_id,
+		a.date,
+		m.label mood_label,
+		e.tag_id tag_id
+	FROM journal_entries a
+	JOIN moods m
+		ON a.mood_id = m.id
+	JOIN entry_tags e
+		ON a.id = e.entry_id
+
+SELECT
+		a.id,
+		a.entry_id,
+		a.tag_id,
+		t.label tag_label
+	FROM entry_tags a
+	JOIN tags t
+		ON a.tag_id = t.id
+	WHERE a.entry_id = 7
+	

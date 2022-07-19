@@ -2,7 +2,7 @@ import sqlite3
 import json
 from models import Entry, Mood, Tag, Entry_Tag
 
-def get_all_entries():
+def get_all_moods():
     # Open a connection to the database
     with sqlite3.connect("./dailyjournal.sqlite3") as conn:
 
@@ -14,18 +14,12 @@ def get_all_entries():
         db_cursor.execute("""
         SELECT
             a.id,
-            a.concept,
-            a.entry,
-            a.mood_id,
-            a.date,
-            m.label mood_label
-        FROM journal_entries a
-        JOIN moods m
-            ON a.mood_id = m.id
+            a.label
+        FROM moods a
                 """)
 
         # Initialize an empty list to hold all entry representations
-        entries = []
+        moods = []
 
         # Convert rows of data into a Python list
         dataset = db_cursor.fetchall()
@@ -33,39 +27,17 @@ def get_all_entries():
         # Iterate list of data returned from database
         for row in dataset:
             # Create an entry instance from the current row
-            entry = Entry(row['id'], row['concept'], row['entry'], row['mood_id'],
-                            row['date'])
+            mood = Mood(row['id'], row['label'])
 
-            # Create a Location instance from the current row
-            mood = Mood(row['mood_id'], row['mood_label'])
-            # Add the dictionary representation of the location to the entry
-            entry.mood = mood.__dict__
-            entry.tags = []
-            
-            entry_id = row['id']
-            db_cursor.execute("""
-            SELECT
-                a.id,
-                a.entry_id,
-                a.tag_id,
-                t.label tag_label
-            FROM entry_tags a
-            JOIN tags t
-                ON a.tag_id = t.id
-            WHERE a.entry_id = ?
-            """, ( entry_id, ))
-            
-            tag_dataset = db_cursor.fetchall()
+            # Add the dictionary representation of the location to the mood
+            # mood.mood = mood.__dict__
+            # mood.customer = customer.__dict__
 
-            for row2 in tag_dataset:
-                tag = Tag(row2['tag_id'], row2['tag_label'])
-                entry.tags.append(tag.__dict__)
-
-            # Add the dictionary representation of the entry to the list
-            entries.append(entry.__dict__)
+            # Add the dictionary representation of the mood to the list
+            moods.append(mood.__dict__)
 
     # Use `json` package to properly serialize list as JSON
-    return json.dumps(entries)
+    return json.dumps(moods)
 
 def get_single_entry(id):
     with sqlite3.connect("./dailyjournal.sqlite3") as conn:
@@ -152,15 +124,9 @@ def create_entry(new_entry):
         # was sent by the client so that the client sees the
         # primary key in the response.
         new_entry['id'] = id
-        tags = new_entry['tags']
+        new_entry['tags'] = []
 
-        for tag in tags:
-            db_cursor.execute("""
-            INSERT INTO entry_tags
-                ( entry_id, tag_id )
-            VALUES
-                ( ?, ?);
-            """, ( id, tag ))
+        
 
 
     return json.dumps(new_entry)
